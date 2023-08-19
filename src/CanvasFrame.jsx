@@ -1,17 +1,18 @@
-import React, { useRef, useEffect } from 'react';
+import React, { forwardRef, useRef, useEffect } from 'react';
 
-export const CanvasFrame = ({ w = 800, h = 600 }) => {
-  const canvasRef = useRef(null);
+export const CanvasFrame = forwardRef(
+  ({ w = 800, h = 600, mix, setMix }, ref) => {
+    const canvasRef = useRef(null);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      setMix(ctx);
+      ctx.fillStyle = 'blue';
+      ctx.fillRect(0, 0, w, h);
+      // ctx.drawImage(mix, 0, 0);
+    }, [w, h, ref]);
 
-    // Aquí puedes realizar tus operaciones de dibujo
-    ctx.fillStyle = 'blue';
-
-    ctx.fillRect(0, 0, w, h);
-  }, [w, h]);
-
-  return <canvas ref={canvasRef} width={w} height={h} />;
-};
+    return <canvas ref={canvasRef} width={w} height={h} />;
+  },
+);

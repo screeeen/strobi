@@ -4,7 +4,6 @@ export const VideoFrame = forwardRef((props, ref) => {
   const { setVideoDimensions, videoDimensions } = props;
   const [videoFile, setVideoFile] = useState(null);
   const [videoSize, setVideoSize] = useState('');
-  //   const [videoDimensions, setVideoDimensions] = useState('');
 
   const formatSize = (sizeInBytes) => {
     if (sizeInBytes < 1024) {
