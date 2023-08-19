@@ -10,12 +10,38 @@ function App() {
 
   const refVideo = useRef();
   const refTimerId = useRef();
+
   const refCanvasStatic = useRef();
   const refStatic = useRef();
   const refImageDataStatic = useRef();
+
+  const refCanvasRunner = useRef();
+  const refRunner = useRef();
+  const refImageDataRunner = useRef();
+
   const refCanvasMix = useRef();
   const refMix = useRef();
   const refImageDataMix = useRef();
+
+  useEffect(() => {
+    const canvas = refCanvasStatic.current;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(0, 0, videoDimensions.w, videoDimensions.h);
+    refStatic.current = ctx;
+
+    const canvasRunner = refCanvasRunner.current;
+    const ctxRunner = canvasRunner.getContext('2d');
+    ctxRunner.fillStyle = 'pink';
+    ctxRunner.fillRect(0, 0, videoDimensions.w, videoDimensions.h);
+    refRunner.current = ctxRunner;
+
+    const canvasMix = refCanvasMix.current;
+    const ctxMix = canvasMix.getContext('2d');
+    ctxMix.fillStyle = 'red';
+    ctxMix.fillRect(0, 0, videoDimensions.w, videoDimensions.h);
+    refMix.current = ctxMix;
+  }, []);
 
   const compare = () => {
     let thresholdOp = threshold;
@@ -24,14 +50,34 @@ function App() {
     let greenOp = blue;
     let alphaOp = alpha;
 
-    refImageDataMix.current = refMix.current.getImageData(
+    // runner
+    refRunner.current.drawImage(
+      refVideo.current,
+      0,
+      0,
+      videoDimensions.w,
+      videoDimensions.h,
+    );
+    refImageDataRunner.current = refRunner.current.getImageData(
       0,
       0,
       videoDimensions.w,
       videoDimensions.h,
     );
 
+    refRunner.current.putImageData(refImageDataRunner.current, 0, 0);
+
+    // mix
+    refImageDataMix.current = refRunner.current.getImageData(
+      0,
+      0,
+      videoDimensions.w,
+      videoDimensions.h,
+    );
+
+    // compute
     let l = refImageDataMix.current.data.length / 4;
+    console.log(l);
 
     for (let i = 0; i < l; i++) {
       let r = refImageDataMix.current.data[i * 4 + 0];
@@ -56,17 +102,8 @@ function App() {
         refImageDataMix.current.data[i * 4 + 3] = alphaOp;
       }
     }
+    refMix.current.putImageData(refImageDataMix.current, 0, 0);
   };
-
-  useEffect(() => {
-    const canvas = refCanvasStatic.current;
-    const ctx = canvas.getContext('2d');
-    refStatic.current = ctx;
-
-    const canvasMix = refCanvasMix.current;
-    const ctxMix = canvasMix.getContext('2d');
-    refMix.current = ctxMix;
-  }, []);
 
   // looping and computing
   const timerCallback = () => {
@@ -79,6 +116,7 @@ function App() {
   };
 
   const setBackground = () => {
+    //pinta primer frame
     refStatic.current.drawImage(
       refVideo.current,
       0,
@@ -86,14 +124,13 @@ function App() {
       videoDimensions.w,
       videoDimensions.h,
     );
-    console.log('refStatic', refStatic.current);
+    //saca image data static
     refImageDataStatic.current = refStatic.current.getImageData(
       0,
       0,
       videoDimensions.w,
       videoDimensions.h,
     );
-    console.log('refImageDataStatic', refImageDataStatic.current);
   };
 
   const setDimensions = () => {
@@ -111,7 +148,7 @@ function App() {
     if (!refVideo.current) return;
     const videoPlayer = refVideo.current;
 
-    videoPlayer.addEventListener('loadedmetadata', setDimensions);
+    // videoPlayer.addEventListener('loadedmetadata', setDimensions);
     videoPlayer.addEventListener('play', setBackground);
     videoPlayer.addEventListener('play', timerCallback);
     videoPlayer.addEventListener('pause', handlePause);
@@ -126,9 +163,14 @@ function App() {
         <p>VIDEO SEQUENCER</p>
         <p>A digital tool for those who like sequences</p>
       </header>
-      <video ref={refVideo} src="example.mov" controls />
+      <video ref={refVideo} src="skate.mov" controls />
       <canvas
         ref={refCanvasStatic}
+        width={videoDimensions.w}
+        height={videoDimensions.h}
+      />
+      <canvas
+        ref={refCanvasRunner}
         width={videoDimensions.w}
         height={videoDimensions.h}
       />
@@ -145,16 +187,3 @@ function App() {
 }
 
 export default App;
-
-// {/* <VideoFrame
-//   ref={refVideo}
-//   setVideoDimensions={setVideoDimensions}
-//   setVideoSize={setVideoSize}
-//   videoSize={videoSize}
-// /> */}
-//       {/* <CanvasFrame
-//   ref={refMix}
-//   w={videoDimensions.w}
-//   h={videoDimensions.h}
-//   setMix={setMix}
-// /> */}
