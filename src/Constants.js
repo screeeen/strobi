@@ -1,4 +1,4 @@
-export const FRAMEINTERVAL = 100; // tiempo entre framesconst threshold = 30;
+export const FRAMEINTERVAL = 200; // tiempo entre framesconst threshold = 30;
 // export const finalImage = [];
 export const red = 255;
 export const green = 255;
