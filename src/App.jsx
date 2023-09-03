@@ -6,21 +6,21 @@ import './App.css';
 function App() {
   const [videoDimensions, setVideoDimensions] = useState({ w: 320, h: 240 });
 
+  // player de video
   const refVideo = useRef();
   const refTimerId = useRef();
 
+  // fondo estático
   const refCanvasStatic = useRef();
   const refStatic = useRef();
   const refImageDataStatic = useRef();
 
+  // video
   const refCanvasRunner = useRef();
   const refRunner = useRef();
   const refImageDataRunner = useRef();
 
-  const refCanvasMix = useRef();
-  const refMix = useRef();
-  const refImageDataMix = useRef();
-
+  // video final
   const refCanvasFinal = useRef();
   const refFinal = useRef();
   const refImageDataFinal = useRef();
@@ -29,6 +29,7 @@ function App() {
   const finalImage = [];
   let sourceImg;
 
+  // setea los canvas
   useEffect(() => {
     const canvas = refCanvasStatic.current;
     const ctx = canvas.getContext('2d');
@@ -42,11 +43,11 @@ function App() {
     ctxRunner.fillRect(0, 0, videoDimensions.w, videoDimensions.h);
     refRunner.current = ctxRunner;
 
-    const canvasMix = refCanvasMix.current;
-    const ctxMix = canvasMix.getContext('2d');
-    ctxMix.fillStyle = 'red';
-    ctxMix.fillRect(0, 0, videoDimensions.w, videoDimensions.h);
-    refMix.current = ctxMix;
+    // const canvasMix = refCanvasMix.current;
+    // const ctxMix = canvasMix.getContext('2d');
+    // ctxMix.fillStyle = 'red';
+    // ctxMix.fillRect(0, 0, videoDimensions.w, videoDimensions.h);
+    // refMix.current = ctxMix;
 
     const canvasFinal = refCanvasFinal.current;
     const ctxFinal = canvasFinal.getContext('2d');
@@ -64,11 +65,10 @@ function App() {
       videoDimensions.w,
       videoDimensions.h,
     );
-    refImageDataRunner.current = getImageData(refRunner);
-    refRunner.current.putImageData(refImageDataRunner.current, 0, 0);
 
     // mix
     refImageDataRunner.current = getImageData(refRunner);
+    // refRunner.current.putImageData(refImageDataRunner.current, 0, 0);
 
     // compute
     let l = refImageDataRunner.current.data.length / 4;
@@ -97,35 +97,37 @@ function App() {
       }
     }
     refFinal.current.putImageData(refImageDataRunner.current, 0, 0);
+
+    // cargar array?
   };
 
   const pushToFinalOperation = () => {
     let pic = new Image();
-    pic = refCanvasMix.current.toDataURL();
+    pic = refCanvasFinal.current.toDataURL();
     finalImage.push(pic);
   };
 
+  // copia las imagenes del array final a el canvas runner
   const mixFinal = () => {
     let imageDataFirst = getImageData(refStatic);
     let imageDataMix = getImageData(refFinal);
 
-    let count = 0;
-    for (let x = 0; x < finalImage.length; x += 4) {
+    for (let x = 0; x < finalImage.length; x += 1) {
       sourceImg = new Image();
       sourceImg.src = finalImage[x];
       refRunner.current.drawImage(sourceImg, 0, 0);
 
       const imageDataSecond = getImageData(refRunner);
-      const pixelsSecond = imageDataSecond.data;
+      const pixelRunner = imageDataSecond.data;
 
-      for (let i = count; i < pixelsSecond.length; i += 1) {
+      for (let i = 0; i < pixelRunner.length; i += 4) {
         let rMix = imageDataFirst.data[i * 4 + 0];
         let gMix = imageDataFirst.data[i * 4 + 1];
         let bMix = imageDataFirst.data[i * 4 + 2];
 
-        let r2 = pixelsSecond[i * 4 + 0];
-        let g2 = pixelsSecond[i * 4 + 1];
-        let b2 = pixelsSecond[i * 4 + 2];
+        let r2 = pixelRunner[i * 4 + 0];
+        let g2 = pixelRunner[i * 4 + 1];
+        let b2 = pixelRunner[i * 4 + 2];
 
         if (
           r2 < rMix + threshold &&
@@ -135,21 +137,20 @@ function App() {
           b2 < bMix + threshold &&
           b2 > bMix - threshold
         ) {
-          imageDataMix.data[i * 4 + 0] = r2;
+          imageDataMix.data[i * 4 + 0] = 0;
           imageDataMix.data[i * 4 + 1] = 0;
           imageDataMix.data[i * 4 + 2] = 0;
-          imageDataMix.data[i * 4 + 3] = 255;
+          imageDataMix.data[i * 4 + 3] = 0;
         }
-        count++;
       }
+      refFinal.current.putImageData(imageDataMix, 0, 0);
     }
-    refFinal.current.putImageData(imageDataMix, 0, 0);
   };
 
   const mixFinalDiff = () => {
     console.log('mixFinalDiff');
 
-    const imageDataMix = getImageData(refFinal);
+    const imageDataFinal = getImageData(refFinal);
 
     for (let x = 0; x < finalImage.length; x += 1) {
       const img = new Image();
@@ -157,20 +158,27 @@ function App() {
       refRunner.current.drawImage(img, 0, 0);
 
       const imageDataSecond = getImageData(refRunner);
-      const pixelsSecond = imageDataSecond.data;
+      const pixelRunner = imageDataSecond.data;
+      console.log(pixelRunner);
 
-      for (let i = 1; i < pixelsSecond.length; i += 1) {
-        let r = pixelsSecond[i];
-        let rp = pixelsSecond[0];
+      for (let i = 1; i < pixelRunner.length; i += 1) {
+        let r = pixelRunner[i];
+        let rp = pixelRunner[0];
         if (r === rp) {
           continue;
         } else {
-          imageDataMix.data[i] = r;
+          imageDataFinal.data[i] = r;
         }
       }
     }
 
-    refFinal.current.putImageData(imageDataMix, 0, 0);
+    refFinal.current.putImageData(imageDataFinal, 0, 0);
+  };
+
+  const handlePause = () => {
+    clearTimeout(refTimerId.current);
+    mixFinal();
+    mixFinalDiff();
   };
 
   // looping and computing
@@ -179,24 +187,24 @@ function App() {
       return;
     }
     refTimerId.current = setTimeout(timerCallback, FRAMEINTERVAL);
-    console.log(refVideo.current.currentTime);
     compare();
     pushToFinalOperation();
   };
 
+  //pinta primer frame
   const setBackground = () => {
-    //pinta primer frame
-    refStatic.current.drawImage(refVideo.current, 0, 0);
+    refStatic.current.drawImage(
+      refVideo.current,
+      0,
+      0,
+      videoDimensions.w,
+      videoDimensions.h,
+    );
     //saca image data static
     refImageDataStatic.current = getImageData(refStatic);
   };
 
-  const handlePause = () => {
-    clearTimeout(refTimerId.current);
-    mixFinal();
-    // mixFinalDiff();
-  };
-
+  // listeneres del player de video
   useEffect(() => {
     if (!refVideo.current) return;
     const videoPlayer = refVideo.current;
@@ -204,7 +212,7 @@ function App() {
     // videoPlayer.addEventListener('loadedmetadata', setDimensions);
     videoPlayer.addEventListener('play', setBackground);
     videoPlayer.addEventListener('play', timerCallback);
-    videoPlayer.addEventListener('pause', handlePause);
+    // videoPlayer.addEventListener('pause', handlePause);
     videoPlayer.addEventListener('ended', handlePause);
 
     return () => clearTimeout(refTimerId.current);
@@ -213,7 +221,7 @@ function App() {
   return (
     <>
       <header>
-        <p>VIDEO SEQUENCER</p>
+        <p>VIDEO SEQUENCER click x2</p>
         <p>A digital tool for those who like sequences</p>
       </header>
       <video ref={refVideo} src="skate.mov" controls width={320} height={240} />
@@ -226,15 +234,7 @@ function App() {
       />
       {/* runner */}
       <canvas
-        hidden
         ref={refCanvasRunner}
-        width={videoDimensions.w}
-        height={videoDimensions.h}
-      />
-      {/* mix */}
-      <canvas
-        hidden
-        ref={refCanvasMix}
         width={videoDimensions.w}
         height={videoDimensions.h}
       />
